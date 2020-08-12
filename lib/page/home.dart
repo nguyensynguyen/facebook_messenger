@@ -1,11 +1,12 @@
-import 'package:fb_login_google/bloc/chat/chat_bloc.dart';
-import 'package:fb_login_google/bloc/chat/chat_event.dart';
-import 'package:fb_login_google/bloc/chat/chat_state.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fb_login_google/bloc/app_bloc/app_bloc.dart';
+import 'package:fb_login_google/bloc/chat_bloc/chat_bloc.dart';
+import 'package:fb_login_google/bloc/chat_bloc/chat_event.dart';
+import 'package:fb_login_google/bloc/chat_bloc/chat_state.dart';
+import 'package:fb_login_google/contains/save_profile.dart';
+import 'package:fb_login_google/page/profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'news_detail.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -22,6 +23,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // ignore: close_sinks
   ChatBloc _chatBloc = new ChatBloc();
+
+  AppBloc _appBloc;
+  Map profileData;
   int lenght = 0;
   ScrollController _scrollController;
   GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -30,14 +34,16 @@ class _HomePageState extends State<HomePage> {
       'https://www.googleapis.com/auth/contacts.readonly',
     ],
   );
-  FirebaseAuth _auth = FirebaseAuth.instance;
-  FirebaseUser _user;
-  GoogleSignIn _signIn = new GoogleSignIn();
-  String _contactText;
 
   @override
   void initState() {
     super.initState();
+
+    _appBloc = BlocProvider.of<AppBloc>(context);
+    if (_appBloc.userProfile == {}) {
+      _appBloc.userProfile = user;
+    }
+
     _chatBloc.add(LoadChat());
     _scrollController = ScrollController();
     _scrollController.addListener(() {
@@ -58,7 +64,7 @@ class _HomePageState extends State<HomePage> {
   bool checkMess = true;
   bool checkContact = false;
   bool checkTab = true;
-  var user;
+  var user = {"link_url": '', "name": ''};
   String img =
       'https://baoquocte.vn/stores/news_dataimages/tranlieu/092016/19/10/103518_anh_1.jpg';
   bool isSignIn = false;
@@ -1645,16 +1651,25 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.white,
           leading: Padding(
             padding: const EdgeInsets.only(left: 16.0, top: 8.0, bottom: 8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black,
-                  image: DecorationImage(
-                      image: NetworkImage(
-                         user['link_url'] == ''?
-                          'https://gamek.mediacdn.vn/2019/3/31/anh-1-1554010168855935071981.jpg': user['link_url'],
-                          scale: 6.0),
-                      fit: BoxFit.fill)),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Profile()),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black,
+                    image: DecorationImage(
+                        image: NetworkImage(
+                            _appBloc.profileData == null
+                                ? 'https://gamek.mediacdn.vn/2019/3/31/anh-1-1554010168855935071981.jpg'
+                                : _appBloc.profileData['link_url'],
+                            scale: 6.0),
+                        fit: BoxFit.fill)),
+              ),
             ),
           ),
           title: Text(
@@ -1670,9 +1685,7 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                       color: Colors.grey[200], shape: BoxShape.circle),
                   child: InkWell(
-                    onTap: () {
-                      _setUpGoogleSignIn();
-                    },
+                    onTap: () {},
                     child: Container(
                         child: Icon(
                       Icons.camera_alt,
@@ -1717,15 +1730,5 @@ class _HomePageState extends State<HomePage> {
 //      isSignIn = true;
 //    });
 //  }
-   _setUpGoogleSignIn() async { try {
-   var profile =
-    await _googleSignIn.signIn();
-   user = {
-     "link_url":profile.photoUrl,
-     "name":profile.displayName
-   };
-  } catch (error) {
-    print(error);
-  }
-  }
+
 }
