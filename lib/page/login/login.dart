@@ -7,6 +7,7 @@ import 'package:fb_login_google/page/home.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -18,6 +19,8 @@ class Login extends StatefulWidget {
 class LoginState extends State<Login> {
   AppBloc _appBloc;
   LoginBloc _LoginBloc;
+  TextEditingController txt_email = TextEditingController();
+  TextEditingController txt_password = TextEditingController();
 
   @override
   void initState() {
@@ -33,8 +36,11 @@ class LoginState extends State<Login> {
     return Scaffold(
       body: BlocListener(
         listener: (context, currentState) {
+          if (currentState is LoadingLoginState) {
+            showDialogProgress(context: context);
+          }
           if (currentState is LoginSuccessState) {
-            Navigator.pushReplacementNamed(context, Routers.homePage);
+            Navigator.pushNamedAndRemoveUntil(context, Routers.homePage, (Route<dynamic> route) => false);
             return;
           }
         },
@@ -43,23 +49,64 @@ class LoginState extends State<Login> {
           bloc: _LoginBloc,
           builder: (context, state) {
             return SafeArea(
-              child: InkWell(
-                onTap: () {
-                  _LoginBloc.add(LoginAppEvent());
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent,
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
+              child: Column(
+                children: <Widget>[
+                  InkWell(
+                    onTap: () {
+                      _LoginBloc.add(LoginAppEvent());
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ),
+                      alignment: Alignment.center,
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height * 0.1,
+                      child: Text(
+                        "login With Google",
+                        style: TextStyle(fontSize: 22),
+                      ),
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height * 0.1,
-                  child: Text(
-                    "login",
-                    style: TextStyle(fontSize: 22),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(context, Routers.SigUp);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ),
+                      alignment: Alignment.center,
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height * 0.1,
+                      child: Text(
+                        "Sign Up",
+                        style: TextStyle(fontSize: 22),
+                      ),
+                    ),
                   ),
-                ),
+                  TextField(
+                    controller: txt_email,
+                    decoration: InputDecoration(hintText: "email"),
+                  ),
+                  TextField(
+                    controller: txt_password,
+                    decoration: InputDecoration(hintText: "password"),
+                  ),
+                  FlatButton(
+                    color: Colors.blue,
+                    child: Text("Sign In"),
+                    onPressed: () {
+                      print(txt_email.text.substring(0, txt_email.text.length));
+                      _LoginBloc.add(LoginAppEvent(
+                          email: txt_email.text
+                              .substring(0, txt_email.text.length),
+                          password: txt_password.text));
+                    },
+                  )
+                ],
               ),
             );
           },
@@ -103,9 +150,5 @@ class LoginState extends State<Login> {
         );
       },
     );
-  }
-
-  void showProgress() {
-    CircularProgressIndicator();
   }
 }

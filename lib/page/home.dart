@@ -2,6 +2,7 @@ import 'package:fb_login_google/bloc/app_bloc/app_bloc.dart';
 import 'package:fb_login_google/bloc/chat_bloc/chat_bloc.dart';
 import 'package:fb_login_google/bloc/chat_bloc/chat_event.dart';
 import 'package:fb_login_google/bloc/chat_bloc/chat_state.dart';
+import 'package:fb_login_google/contains/routers.dart';
 import 'package:fb_login_google/contains/save_profile.dart';
 import 'package:fb_login_google/page/profile.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,8 +23,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // ignore: close_sinks
-  ChatBloc _chatBloc = new ChatBloc();
-
+  ChatBloc _chatBloc;
   AppBloc _appBloc;
   Map profileData;
   int lenght = 0;
@@ -38,21 +38,20 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
     _appBloc = BlocProvider.of<AppBloc>(context);
     if (_appBloc.userProfile == {}) {
       _appBloc.userProfile = user;
     }
-
+    _chatBloc = ChatBloc(appBloc: _appBloc);
     _chatBloc.add(LoadChat());
     _scrollController = ScrollController();
-    _scrollController.addListener(() {
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final currentScroll = _scrollController.position.pixels;
-      if (maxScroll == currentScroll) {
-        _chatBloc.add(LoadMoreChat());
-      }
-    });
+//    _scrollController.addListener(() {
+//      final maxScroll = _scrollController.position.maxScrollExtent;
+//      final currentScroll = _scrollController.position.pixels;
+//      if (maxScroll == currentScroll) {
+//        _chatBloc.add(LoadMoreChat());
+//      }
+//    });
   }
 
   @override
@@ -1087,404 +1086,540 @@ class _HomePageState extends State<HomePage> {
 
   _UiMess1() {
     return SafeArea(
-        child: BlocBuilder(
-      bloc: _chatBloc,
-      builder: (BuildContext context, ChatState state) {
+        child: BlocListener(
+      listener: (context, state) {
         if (state is ChatLoading) {
-          return Container(
-            child: CupertinoActivityIndicator(),
-          );
+          showDialogProgress(context: context);
         }
         if (state is ChatLoaded) {
-          this.lenght = _chatBloc.listData.length + 1;
+          Navigator.pop(context);
         }
-        return SingleChildScrollView(
-          controller: _scrollController,
-          child: Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(
-                    top: 16.0, left: 16.0, right: 16.0, bottom: 16.0),
-                child: Container(
-                  height: 40.0,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(40.0),
+      },
+      bloc: _chatBloc,
+      child: BlocBuilder(
+        bloc: _chatBloc,
+        builder: (BuildContext context, ChatState state) {
+          return SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(
+                      top: 16.0, left: 16.0, right: 16.0, bottom: 16.0),
+                  child: Container(
+                    height: 40.0,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(40.0),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(Icons.search),
+                        ),
+                        Expanded(
+                          child: Container(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: 'Tìm kiếm'),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
+                ),
+
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(Icons.search),
-                      ),
-                      Expanded(
+                        padding: const EdgeInsets.only(left: 8.0, right: 6.0),
                         child: Container(
-                          child: TextField(
-                            decoration: InputDecoration(
-                                border: InputBorder.none, hintText: 'Tìm kiếm'),
+                          width: MediaQuery.of(context).size.width * 0.2,
+                          height: MediaQuery.of(context).size.height * 0.14,
+                          child: Column(
+                            children: <Widget>[
+                              Container(
+                                width: 50.0,
+                                height: 56.0,
+                                child: Icon(Icons.add),
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    shape: BoxShape.circle),
+                              ),
+                              const Text(
+                                'Tin của bạn',
+                                style: TextStyle(fontSize: 13.0),
+                              )
+                            ],
                           ),
                         ),
                       )
-                    ],
-                  ),
-                ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 6.0),
-                      child: Container(
-                        width: MediaQuery.of(context).size.width * 0.2,
-                        height: MediaQuery.of(context).size.height * 0.14,
-                        child: Column(
-                          children: <Widget>[
-                            Container(
-                              width: 50.0,
-                              height: 56.0,
-                              child: Icon(Icons.add),
-                              decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  shape: BoxShape.circle),
-                            ),
-                            const Text(
-                              'Tin của bạn',
-                              style: TextStyle(fontSize: 13.0),
-                            )
-                          ],
-                        ),
-                      ),
-                    )
-                  ]..addAll(
-                      _chatBloc.listData?.map<Widget>((item) {
-                        return item.isOnline
-                            ? Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: item.isNewStory == true
-                                    ? InkWell(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    NewsDetail(
-                                                      img: item.story,
-                                                      userAvatar:
-                                                          item.userAvatar,
-                                                    )),
-                                          );
-                                        },
-                                        child: Container(
-                                            // alignment: Alignment.topCenter,
-                                            width: 55.0,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Stack(
-                                                    alignment: Alignment.center,
-                                                    children: <Widget>[
-                                                      Container(
-                                                        height: 54.0,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors.white,
-                                                          border: Border.all(
-                                                              color:
-                                                                  Colors.blue,
-                                                              width: 3.0),
-                                                          shape:
-                                                              BoxShape.circle,
-                                                        ),
-                                                      ),
-                                                      CircleAvatar(
-                                                          radius: 22.0,
-                                                          backgroundImage:
-                                                              NetworkImage(
-                                                            item.userAvatar,
-                                                          )),
-                                                      Positioned(
-                                                        top: 39,
-                                                        left: 38,
-                                                        child: Stack(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          children: <Widget>[
-                                                            Container(
-                                                              width: 15.0,
-                                                              height: 15.0,
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      new BorderRadius
-                                                                              .circular(
-                                                                          25.0),
-                                                                  border: Border.all(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      width:
-                                                                          2.0),
-                                                                  color: Colors
-                                                                          .grey[
-                                                                      300]),
-                                                            ),
-                                                            Container(
-                                                              height: 12.0,
-                                                              width: 12.0,
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      new BorderRadius
-                                                                              .circular(
-                                                                          25.0),
-                                                                  color: Colors
-                                                                      .green),
-                                                            )
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ]),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          top: 3.0),
-                                                  child: Text(item.userName),
-                                                )
-                                              ],
-                                            )),
-                                      )
-                                    : Container(
-                                        // alignment: Alignment.topCenter,
+                    ]..addAll(
+                        _chatBloc.roomId?.map<Widget>((item) {
+                              return
+                                  Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 16.0),
+                               child:Container(
+                                      // alignment: Alignment.topCenter,
                                         width: 50.0,
                                         child: Column(
                                           children: <Widget>[
                                             Stack(
-                                                //   alignment: Alignment.bottomRight,
+                                              //   alignment: Alignment.bottomRight,
                                                 children: <Widget>[
                                                   CircleAvatar(
                                                       radius: 26.0,
                                                       backgroundImage:
-                                                          NetworkImage(
-                                                        item.userAvatar,
+                                                      NetworkImage(
+                                                        item.img,
                                                       )),
                                                   Positioned(
                                                     top: 38,
                                                     left: 36,
                                                     child: Stack(
-                                                      alignment:
-                                                          Alignment.center,
+                                                      alignment: Alignment
+                                                          .center,
                                                       children: <Widget>[
                                                         Container(
                                                           width: 15.0,
                                                           height: 15.0,
                                                           decoration: BoxDecoration(
                                                               borderRadius:
-                                                                  new BorderRadius
-                                                                          .circular(
-                                                                      25.0),
+                                                              new BorderRadius.circular(
+                                                                  25.0),
                                                               border: Border.all(
                                                                   color: Colors
                                                                       .white,
-                                                                  width: 2.0),
+                                                                  width:
+                                                                  2.0),
                                                               color: Colors
-                                                                  .grey[300]),
+                                                                  .grey[
+                                                              300]),
                                                         ),
                                                         Container(
                                                           height: 12.0,
                                                           width: 12.0,
                                                           decoration: BoxDecoration(
                                                               borderRadius:
-                                                                  new BorderRadius
-                                                                          .circular(
-                                                                      25.0),
-                                                              color:
-                                                                  Colors.green),
+                                                              new BorderRadius.circular(
+                                                                  25.0),
+                                                              color: Colors
+                                                                  .green),
                                                         )
                                                       ],
                                                     ),
                                                   ),
                                                 ]),
                                             Padding(
-                                              padding: const EdgeInsets.only(
+                                              padding:
+                                              const EdgeInsets.only(
                                                   top: 3.0),
-                                              child: Text(item.userName),
+                                              child:
+                                              Text(item.roomTitle),
                                             )
                                           ],
                                         )),
-                              )
-                            : Container();
-                      })?.toList(),
-                    ),
+//                                      child: item.data['isNewStory'] == true
+//                                          ? InkWell(
+//                                              onTap: () {
+////                                          Navigator.push(
+////                                            context,
+////                                            MaterialPageRoute(
+////                                                builder: (context) =>
+////                                                    NewsDetail(
+////                                                      img: item.story,
+////                                                      userAvatar:
+////                                                          item.data['img'],
+////                                                    )),
+////                                          );
+//                                              },
+//                                              child: Container(
+//                                                  // alignment: Alignment.topCenter,
+//                                                  width: 55.0,
+//                                                  child: Column(
+//                                                    children: <Widget>[
+//                                                      Stack(
+//                                                          alignment:
+//                                                              Alignment.center,
+//                                                          children: <Widget>[
+//                                                            Container(
+//                                                              height: 54.0,
+//                                                              decoration:
+//                                                                  BoxDecoration(
+//                                                                color: Colors
+//                                                                    .white,
+//                                                                border: Border.all(
+//                                                                    color: Colors
+//                                                                        .blue,
+//                                                                    width: 3.0),
+//                                                                shape: BoxShape
+//                                                                    .circle,
+//                                                              ),
+//                                                            ),
+//                                                            CircleAvatar(
+//                                                                radius: 22.0,
+//                                                                backgroundImage:
+//                                                                    NetworkImage(
+//                                                                  item.data[
+//                                                                      'img'],
+//                                                                )),
+//                                                            Positioned(
+//                                                              top: 39,
+//                                                              left: 38,
+//                                                              child: Stack(
+//                                                                alignment:
+//                                                                    Alignment
+//                                                                        .center,
+//                                                                children: <
+//                                                                    Widget>[
+//                                                                  Container(
+//                                                                    width: 15.0,
+//                                                                    height:
+//                                                                        15.0,
+//                                                                    decoration: BoxDecoration(
+//                                                                        borderRadius:
+//                                                                            new BorderRadius.circular(
+//                                                                                25.0),
+//                                                                        border: Border.all(
+//                                                                            color: Colors
+//                                                                                .white,
+//                                                                            width:
+//                                                                                2.0),
+//                                                                        color: Colors
+//                                                                            .grey[300]),
+//                                                                  ),
+//                                                                  Container(
+//                                                                    height:
+//                                                                        12.0,
+//                                                                    width: 12.0,
+//                                                                    decoration: BoxDecoration(
+//                                                                        borderRadius:
+//                                                                            new BorderRadius.circular(
+//                                                                                25.0),
+//                                                                        color: Colors
+//                                                                            .green),
+//                                                                  )
+//                                                                ],
+//                                                              ),
+//                                                            ),
+//                                                          ]),
+//                                                      Padding(
+//                                                        padding:
+//                                                            const EdgeInsets
+//                                                                .only(top: 3.0),
+//                                                        child: Text(
+//                                                            item.data['name']),
+//                                                      )
+//                                                    ],
+//                                                  )),
+//                                            )
+//                                          : Container(
+//                                              // alignment: Alignment.topCenter,
+//                                              width: 50.0,
+//                                              child: Column(
+//                                                children: <Widget>[
+//                                                  Stack(
+//                                                      //   alignment: Alignment.bottomRight,
+//                                                      children: <Widget>[
+//                                                        CircleAvatar(
+//                                                            radius: 26.0,
+//                                                            backgroundImage:
+//                                                                NetworkImage(
+//                                                              item.data['img'],
+//                                                            )),
+//                                                        Positioned(
+//                                                          top: 38,
+//                                                          left: 36,
+//                                                          child: Stack(
+//                                                            alignment: Alignment
+//                                                                .center,
+//                                                            children: <Widget>[
+//                                                              Container(
+//                                                                width: 15.0,
+//                                                                height: 15.0,
+//                                                                decoration: BoxDecoration(
+//                                                                    borderRadius:
+//                                                                        new BorderRadius.circular(
+//                                                                            25.0),
+//                                                                    border: Border.all(
+//                                                                        color: Colors
+//                                                                            .white,
+//                                                                        width:
+//                                                                            2.0),
+//                                                                    color: Colors
+//                                                                            .grey[
+//                                                                        300]),
+//                                                              ),
+//                                                              Container(
+//                                                                height: 12.0,
+//                                                                width: 12.0,
+//                                                                decoration: BoxDecoration(
+//                                                                    borderRadius:
+//                                                                        new BorderRadius.circular(
+//                                                                            25.0),
+//                                                                    color: Colors
+//                                                                        .green),
+//                                                              )
+//                                                            ],
+//                                                          ),
+//                                                        ),
+//                                                      ]),
+//                                                  Padding(
+//                                                    padding:
+//                                                        const EdgeInsets.only(
+//                                                            top: 3.0),
+//                                                    child:
+//                                                        Text(item.data['name']),
+//                                                  )
+//                                                ],
+//                                              )),
+                                    );
+
+                            })?.toList() ??
+                            [],
+                      ),
+                  ),
                 ),
-              ),
-              Column(
-                children: _chatBloc.listData?.map<Widget>((item) {
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        newMess = false;
-                      });
-                    },
-                    child: Container(
-                        child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          alignment: Alignment.center,
-                          height: 80.0,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10.0),
-                            child:
-                                Stack(alignment: Alignment.center, children: <
-                                    Widget>[
+                Column(
+                  children: _chatBloc.roomId?.map<Widget>((item) {
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              newMess = false;
+                            });
+                            _appBloc.userName = item.roomTitle;
+                            _appBloc.roomId = item.roomId;
+                            _appBloc.img = item.img;
+                            _appBloc.userIdRoom = item.documentId;
+                            Navigator.pushNamed(context, Routers.chat);
+                          },
+                          child: Container(
+                              child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
                               Container(
-                                width: 66.0,
-                                height: 70,
-                              ),
-                              Positioned(
-                                child: Stack(
-                                  overflow: Overflow.visible,
-                                  alignment: Alignment.bottomRight,
-                                  children: <Widget>[
-                                    CircleAvatar(
-                                      radius: 26,
-                                      backgroundImage: NetworkImage(
-                                        item.userAvatar,
-                                      ),
-                                    ),
-                                    item.isOnline == false
-                                        ? Positioned(
-                                            left: 30.0,
-                                            child: Stack(
-                                              alignment: Alignment.center,
-                                              children: <Widget>[
-                                                Container(
-                                                  width: 40.0,
-                                                  height: 15.0,
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          new BorderRadius
-                                                              .circular(25.0),
-                                                      color: Colors.grey[300]),
-                                                ),
-                                                Container(
-                                                  height: 12.0,
-                                                  width: 35.0,
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          new BorderRadius
-                                                              .circular(25.0),
-                                                      color: Colors.green),
-                                                  child: Text(
-                                                    ' 3 phút',
-                                                    style: TextStyle(
-                                                        fontSize: 10.0,
-                                                        color: Colors.white),
-                                                  ),
-                                                )
-                                              ],
-                                            ))
-                                        : Positioned(
-                                            child: Stack(
-                                            alignment: Alignment.center,
+                                alignment: Alignment.center,
+                                height: 80.0,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 10.0),
+                                  child: Stack(
+                                      alignment: Alignment.center,
+                                      children: <Widget>[
+                                        Container(
+                                          width: 66.0,
+                                          height: 70,
+                                        ),
+                                        Positioned(
+                                          child: Stack(
+                                            overflow: Overflow.visible,
+                                            alignment: Alignment.bottomRight,
                                             children: <Widget>[
-                                              Container(
-                                                width: 15.0,
-                                                height: 15.0,
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        new BorderRadius
-                                                            .circular(25.0),
-                                                    color: Colors.grey[300]),
+                                              CircleAvatar(
+                                                radius: 26,
+                                                backgroundImage: NetworkImage(
+                                                  item.img,
+                                                ),
                                               ),
-                                              Container(
-                                                height: 12.0,
-                                                width: 12.0,
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        new BorderRadius
-                                                            .circular(25.0),
-                                                    color: Colors.green),
-                                              )
+//                                              item.data['isOnline']
+//                                                  ? Positioned(
+//                                                      child: Stack(
+//                                                      alignment:
+//                                                          Alignment.center,
+//                                                      children: <Widget>[
+//                                                        Container(
+//                                                          width: 15.0,
+//                                                          height: 15.0,
+//                                                          decoration: BoxDecoration(
+//                                                              borderRadius:
+//                                                                  new BorderRadius
+//                                                                          .circular(
+//                                                                      25.0),
+//                                                              color: Colors
+//                                                                  .grey[300]),
+//                                                        ),
+//                                                        Container(
+//                                                          height: 12.0,
+//                                                          width: 12.0,
+//                                                          decoration: BoxDecoration(
+//                                                              borderRadius:
+//                                                                  new BorderRadius
+//                                                                          .circular(
+//                                                                      25.0),
+//                                                              color:
+//                                                                  Colors.green),
+//                                                        )
+//                                                      ],
+//                                                    ))
+//                                                  : Positioned(
+//                                                      left: 30.0,
+//                                                      child: Stack(
+//                                                        alignment:
+//                                                            Alignment.center,
+//                                                        children: <Widget>[
+//                                                          Container(
+//                                                            width: 40.0,
+//                                                            height: 15.0,
+//                                                            decoration: BoxDecoration(
+//                                                                borderRadius:
+//                                                                    new BorderRadius
+//                                                                            .circular(
+//                                                                        25.0),
+//                                                                color: Colors
+//                                                                    .grey[300]),
+//                                                          ),
+//                                                          Container(
+//                                                            height: 12.0,
+//                                                            width: 35.0,
+//                                                            decoration: BoxDecoration(
+//                                                                borderRadius:
+//                                                                    new BorderRadius
+//                                                                            .circular(
+//                                                                        25.0),
+//                                                                color: Colors
+//                                                                    .green),
+//                                                            child: Text(
+//                                                              ' 3 phút',
+//                                                              style: TextStyle(
+//                                                                  fontSize:
+//                                                                      10.0,
+//                                                                  color: Colors
+//                                                                      .white),
+//                                                            ),
+//                                                          )
+//                                                        ],
+//                                                      ))
                                             ],
-                                          ))
-                                  ],
+                                          ),
+                                        ),
+                                      ]),
                                 ),
                               ),
-                            ]),
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: Container(
-                              alignment: Alignment.centerLeft,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 3.0),
-                                    child: Text(
-                                      item.userName,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 16.0),
+                                  child: Container(
+                                    alignment: Alignment.centerLeft,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 3.0),
+                                          child: Text(
+                                            item.roomTitle,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
+                                        ),
+//                                        item.data['isNewMess']
+//                                            ? Text(
+//                                                "erdrber",
+//                                                style: TextStyle(
+//                                                    fontWeight: FontWeight.bold,
+//                                                    fontSize: 16),
+//                                              )
+//                                            : item.data['isSend']
+//                                                ? Text(
+//                                                    "dfbd",
+//                                                    style:
+//                                                        TextStyle(fontSize: 15),
+//                                                  )
+//                                                : Text("wesev")
+                                      ],
                                     ),
                                   ),
-                                  item.isNews
-                                      ? Text(
-                                          item.messenger,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16),
-                                        )
-                                      : item.isSeen == false
-                                          ? Text(
-                                              item.messenger,
-                                              style: TextStyle(fontSize: 15),
-                                            )
-                                          : Text(item.messenger)
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        item.isNews
-                            ? Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: Container(
-                                  height: 13.0,
-                                  width: 13.0,
-                                  decoration: BoxDecoration(
-                                      borderRadius:
-                                          new BorderRadius.circular(25.0),
-                                      color: Colors.blue),
                                 ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: item.isSeen == false
-                                    ? CircleAvatar(
-                                        radius: 7,
-                                        backgroundImage: NetworkImage(
-                                          'https://3.bp.blogspot.com/-2Nj1cR7p8KE/WZUuy1hZpLI/AAAAAAAATWk/woFZ8V3GldoCNKLSXXLkz0FNfazRWRdCACLcBGAs/s1600/Taianhdep.club__tai-hinh-anh-de-thuong-kute-de-thuong%2B%252812%2529.jpg',
-                                        ))
-                                    : Icon(
-                                        Icons.check_circle,
-                                        color: Colors.grey[400],
-                                        size: 16.0,
-                                      ),
                               ),
-                      ],
-                    )),
-                  );
-                })?.toList()
-                  ..add(CupertinoActivityIndicator()),
-              )
-            ],
+//                              item.data['isNewStory']
+//                                  ? Padding(
+//                                      padding:
+//                                          const EdgeInsets.only(right: 16.0),
+//                                      child: Container(
+//                                        height: 13.0,
+//                                        width: 13.0,
+//                                        decoration: BoxDecoration(
+//                                            borderRadius:
+//                                                new BorderRadius.circular(25.0),
+//                                            color: Colors.blue),
+//                                      ),
+//                                    )
+//                                  : Padding(
+//                                      padding:
+//                                          const EdgeInsets.only(right: 16.0),
+//                                      child: item.data['isSeen']
+//                                          ? CircleAvatar(
+//                                              radius: 7,
+//                                              backgroundImage: NetworkImage(
+//                                                'https://3.bp.blogspot.com/-2Nj1cR7p8KE/WZUuy1hZpLI/AAAAAAAATWk/woFZ8V3GldoCNKLSXXLkz0FNfazRWRdCACLcBGAs/s1600/Taianhdep.club__tai-hinh-anh-de-thuong-kute-de-thuong%2B%252812%2529.jpg',
+//                                              ))
+//                                          : Icon(
+//                                              Icons.check_circle,
+//                                              color: Colors.grey[400],
+//                                              size: 16.0,
+//                                            ),
+//                                    ),
+                            ],
+                          )),
+                        );
+                      })?.toList() ??
+                      [],
+                )
+              ],
+            ),
+          );
+        },
+      ),
+    ));
+  }
+
+  void showDialogProgress({@required context}) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return WillPopScope(
+          onWillPop: () async {
+            return false;
+          },
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: <Widget>[
+                  CircularProgressIndicator(
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "Load...",
+                    style: const TextStyle(fontSize: 20),
+                  )
+                ],
+              ),
+            ),
           ),
         );
       },
-    ));
+    );
   }
 
   Widget build(BuildContext context) {

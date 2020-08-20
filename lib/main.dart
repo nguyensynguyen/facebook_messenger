@@ -1,7 +1,9 @@
 import 'package:fb_login_google/bloc/app_bloc/app_bloc.dart';
 import 'package:fb_login_google/contains/routers.dart';
+import 'package:fb_login_google/page/chat.dart';
 import 'package:fb_login_google/page/home.dart';
 import 'package:fb_login_google/page/login/login.dart';
+import 'package:fb_login_google/page/login/register.dart';
 import 'package:fb_login_google/page/profile.dart';
 import 'package:fb_login_google/page/splash.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,6 +32,9 @@ class MyApp extends StatelessWidget {
           Routers.logIn: (BuildContext context) => Login(),
           Routers.logOut: (BuildContext context) => Login(),
           Routers.profile: (BuildContext context) => Profile(),
+          Routers.chat:(BuildContext context) => MessChat(),
+          Routers.SigUp:(BuildContext context) => SignUpScreen(),
+
         },
       ),
     );

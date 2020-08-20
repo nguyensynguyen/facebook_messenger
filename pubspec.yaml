@@ -40,6 +40,12 @@ dependencies:
   http: ^0.12.2
   firebase_auth: any
   shared_preferences: any
+  keyboard_visibility: any
+  auto_size_text: any
+  cloud_firestore: any
+  flutter_datetime_picker: any
+  intl: any
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

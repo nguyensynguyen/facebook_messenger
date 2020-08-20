@@ -82,7 +82,7 @@ class ProfileState extends State<Profile> {
 //              Navigator.removeRoute(context, MaterialPageRoute( builder: (BuildContext context) => Profile()));
 //              Navigator.removeRoute(context, MaterialPageRoute( builder: (BuildContext context) => HomePage()));
 //              Navigator.push(context,  MaterialPageRoute( builder: (BuildContext context) => Login()));
-              Navigator.pushReplacementNamed(context, Routers.logOut);
+              Navigator.pushNamedAndRemoveUntil(context, Routers.logOut,(Route<dynamic> router ) => false);
               return;
             }
           },

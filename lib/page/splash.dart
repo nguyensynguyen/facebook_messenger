@@ -19,7 +19,6 @@ class _Splash extends State<Splash> with TickerProviderStateMixin {
   AppBloc _appBloc;
   LoginBloc _LoginBloc;
 
-
   @override
   void initState() {
     // TODO: implement initState
@@ -44,8 +43,7 @@ class _Splash extends State<Splash> with TickerProviderStateMixin {
             Navigator.pushReplacementNamed(context, Routers.logIn);
           }
         },
-        child: Center(
-            child:Image.asset("image/unnamed.gif")),
+        child: Center(child: Image.asset("image/unnamed.gif")),
       ),
     );
   }

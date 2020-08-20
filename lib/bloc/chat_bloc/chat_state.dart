@@ -6,3 +6,6 @@ class ChatLoading extends ChatState{}
 class ChatLoadedErrors extends ChatState{}
 class ChatLoaded extends ChatState{}
 class loadingMoreChat extends ChatState{}
+
+class LoadMessageSuccessState extends ChatState{}
+class RefreshMessageState extends ChatState{}
